@@ -131,6 +131,5 @@ module = (function () {
         "debug": setDebug,
         "require": require,
         "define": define
-
     }
 })();

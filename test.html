@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test loom.js</title>
+</head>
+<body>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="loom.js"></script>
+<script>
+
+    module.debug(true);
+
+    module.define('a', ['c', 'b'], function (c, b) {
+
+        console.log('processing a');
+
+        return {
+            c: c,
+            logVal: function () {
+                console.log(c.val);
+            },
+            init: function () {
+                console.log('initiated a');
+                b.init();
+                c.add();
+                c.add();
+            }
+        };
+    });
+
+    module.define('c', [], function () {
+
+        console.log('processing c');
+
+        return {
+            val: 0,
+            add: function () {
+                this.val++;
+                console.log("val c: " + this.val);
+            },
+            init: function () {
+                console.log('initiated c');
+            }
+        };
+    });
+
+    module.define('main', ['a'], function (a) {
+
+        a.init();
+
+        module.require('e', function (e) {
+            e.init();
+        });
+
+        a.logVal();
+        a.c.add();
+        a.logVal();
+
+        console.log('initiated main');
+
+    }, true);
+
+    module.define('d', ['e'], function () {
+
+        console.log('processing d');
+
+        console.log('this should not be logged, since d is not used');
+
+        return {
+            init: function () {
+                console.log('initiated e');
+            }
+        };
+    });
+
+    module.define('b', ['c'], function (c) {
+
+        c.init();
+        console.log('processing b');
+
+        return {
+            init: function () {
+                console.log('initiated b');
+                c.add();
+            }
+        };
+    });
+
+    module.define("jQuery", function () {
+        return 'insert jQuery here';
+    });
+
+    module.define("modernizr", function () {
+        return 'insert modernizr here';
+    });
+
+    module.define('e', function () {
+
+        console.log('processing e');
+
+        return {
+            init: function () {
+                console.log('initiated e');
+            }
+        };
+    });
+
+    module.require(['e'], function (e) {
+
+        module.require(['e', 'jQuery', 'load'], function (e, $, l) {
+            console.log('got e and $ and l');
+            console.log(l('yolo'));
+        });
+
+        module.require('e', function (e) {
+
+        });
+
+    });
+
+    module.define('load', function () {
+        return function (yolo) {
+
+            return yolo + ' swag';
+        };
+    });
+
+
+    module.define('Square', ['Multiply'], function (multi) {
+
+        return function (num) {
+            return multi(num, num);
+        }
+    });
+
+
+    module.define('Main', ['Square', 'Multiply', 'Add', 'jQuery'], function (sq, mul, add, $) {
+        var a = 3;
+
+        console.log(sq(a));
+        console.log(mul(a, 3));
+        console.log(add(a, 4));
+
+        // $('body').text('works!');
+    }, true);
+
+
+    module.define('Multiply', function () {
+
+        return function (num1, num2) {
+            return num1 * num2;
+        }
+    });
+
+    module.define('jQuery', function () {
+
+        return jQuery.noConflict(); //assuming jQuery is loaded
+    });
+
+    module.define('Add', function () {
+
+        return function (num1, num2) {
+            return num1 + num2;
+        }
+    });
+</script>
+</body>
+</html>

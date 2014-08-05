@@ -4,7 +4,7 @@
  * @author Maximilian Beck
  * @link http://glumb.de/loomjs
  * @license http://opensource.org/licenses/MIT
- * @version 0.1
+ * @version 0.1.0
  */
 
 module = (function () {

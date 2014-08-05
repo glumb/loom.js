@@ -22,4 +22,4 @@ Modules are only evaluated, if the optional parameter `resolve` is set to *true*
 using `module.require()`.
 
 ##Examples
-Find examples [here](www.glumb.de/loomjs)
+Find examples [here](http://glumb.de/loomjs)

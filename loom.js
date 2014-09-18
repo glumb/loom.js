@@ -4,14 +4,14 @@
  * @author Maximilian Beck
  * @link http://glumb.de/loomjs
  * @license http://opensource.org/licenses/MIT
- * @version 0.1.0
+ * @version 0.2.0
  */
 
-module = (function () {
+(function (namespace) {
     var debug = false,
 
         moduleContainer = {},
-        waitingFor = {}, //'a':['b','c'] module b,c are waiting for a
+        moduleQueue = {}, //'a':['b','c'] module b,c are waiting for a
         requireId = 0;
 
     function define(moduleName, deps, module, resolve) { //('n',[d],m,r) ('n',m,r) ('n',[d],m) ('n',m)
@@ -36,7 +36,7 @@ module = (function () {
             resolved: false
         };
 
-        if (waitingFor[moduleName] || resolve) {
+        if (moduleQueue[moduleName] || resolve) {
             resolveModuleDeps(moduleName);
         }
     }
@@ -50,17 +50,17 @@ module = (function () {
     // adds moduleName to the list of the module it is waiting for
     function addWaitingFor(moduleName, waitingForName) {
         log('module "' + moduleName + '" waiting for module "' + waitingForName + '"');
-        var pendingEntry = waitingFor[waitingForName] || []; //['a','b'] or []
+        var pendingEntry = moduleQueue[waitingForName] || []; //['a','b'] or []
 
         if (!(pendingEntry.indexOf(moduleName) > -1)) {
             pendingEntry.push(moduleName);
-            waitingFor[waitingForName] = pendingEntry;
+            moduleQueue[waitingForName] = pendingEntry;
         }
     }
 
     function removeWaitingFor(moduleName) {
-        log('deleting waitingFor: "' + moduleName + '"');
-        delete waitingFor[moduleName];
+        log('deleting moduleQueue: "' + moduleName + '"');
+        delete moduleQueue[moduleName];
     }
 
     function resolveModule(moduleName, deps) {
@@ -68,10 +68,14 @@ module = (function () {
         var module = moduleContainer[moduleName];
 
         module.resolved = true;
-        module.module = (deps !== undefined && deps.length > 0) ? module.module.apply(this, deps) : module.module.apply(this);
+        module.module = (typeof module.module !== 'function') ?
+            module.module :
+            (deps !== undefined && deps.length > 0) ?
+                module.module.apply(null, deps) :
+                module.module.apply(null);
 
-        if (waitingFor[moduleName]) {
-            var waitingForArr = waitingFor[moduleName]; //['b','c'] b, c waiting for module
+        if (moduleQueue[moduleName]) {
+            var waitingForArr = moduleQueue[moduleName]; //['b','c'] b, c waiting for module
             for (var i = 0; i < waitingForArr.length; i++) {
                 resolveModuleDeps(waitingForArr[i]);
             }
@@ -127,9 +131,16 @@ module = (function () {
             console.log(message);
     }
 
-    return {
-        "debug": setDebug,
-        "require": require,
-        "define": define
-    }
-})();
+    namespace.define = define;
+    namespace.require = require;
+
+    namespace.define.amd = true;
+
+    namespace.loom = {
+        "queue": moduleQueue,
+        "modules": moduleContainer,
+        "requireCounter": requireId,
+        "debug": setDebug
+    };
+
+})(window);

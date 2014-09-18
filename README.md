@@ -93,4 +93,4 @@ define('Pi', function () {
 ```
 
 ##More examples
-Find examples [here](www.glumb.de/loomjs)
+Find examples [here](http://glumb.de/loomjs)

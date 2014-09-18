@@ -2,15 +2,122 @@
 <html>
 <head>
     <title>Test loom.js</title>
+    <link rel="stylesheet" href="//code.jquery.com/qunit/qunit-1.15.0.css">
+    <script src="loom.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="//code.jquery.com/qunit/qunit-1.15.0.js"></script>
 </head>
 <body>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script src="loom.js"></script>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+
 <script>
 
-    module.debug(true);
+loom.debug(true);
 
-    module.define('a', ['c', 'b'], function (c, b) {
+QUnit.module("define test");
+
+QUnit.test("test that modules can be defined", function (assert) {
+
+    define('testModule1', function () {
+        return 'data'
+    });
+
+    assert.ok(loom.modules.hasOwnProperty('testModule1'), "'testModule1' is defined");
+
+    define('testModule2', function () {
+        return 'data'
+    });
+
+    assert.ok(loom.modules.hasOwnProperty('testModule2'), "'testModule2' is defined");
+});
+
+QUnit.test("test that modules can objects and functions", function (assert) {
+
+    define('testModule4', {
+        data: 'some data',
+        func: function (e) {
+            alert(e);
+        }
+    });
+
+    define('testModule5', function () {
+        return 'other data'
+    });
+
+    var m4, m5;
+
+    require(['testModule4', 'testModule5'], function (tm4, tm5) {
+        m4 = tm4;
+        m5 = tm5;
+    });
+
+    assert.equal(m4.data, 'some data', "module as Object");
+    assert.equal(m5, 'other data', "module as anonymous function");
+
+});
+
+
+QUnit.module("require test");
+
+QUnit.test("test that jquery registers itself as a module", function (assert) {
+
+    var jq;
+    require('jquery', function ($jq) {
+        jq = $jq;
+    });
+    assert.ok(jq === $, "'jquery' is available");
+});
+
+QUnit.test("test that requires can be nested", function (assert) {
+
+    assert.ok(loom.modules.hasOwnProperty('testModule1') && loom.modules.hasOwnProperty('testModule2'), "assert that 'testModule1' and 'testModule2' are available");
+
+    var m2 = false;
+    require('testModule1', function () {
+        require('testModule2', function (tm2) {
+            m2 = tm2;
+        });
+    });
+    assert.ok(m2 === 'data', "testModule2 resturns `data`");
+});
+
+QUnit.test("test that modules can be required", function (assert) {
+
+    assert.ok(loom.modules.hasOwnProperty('testModule1') && loom.modules.hasOwnProperty('testModule2'), "assert that 'testModule1' and 'testModule2' are available");
+
+    var m1, m2 = false;
+    require('testModule1', function ($) {
+        m1 = true;
+    });
+    require('testModule1', function ($) {
+        m2 = true;
+    });
+    assert.ok(m1 && m2, "modules can be required");
+});
+
+
+QUnit.module("general tests");
+
+QUnit.test("context of `this`", function (assert) {
+
+    define('testModule6', {
+        data: 'some data',
+        self: function () {
+            return this;
+        }
+    });
+    var m6;
+    require(['testModule6'], function (tm6) {
+        m6 = tm6;
+    });
+
+    assert.deepEqual(loom.modules['testModule6'].module, m6.self(), '`this` refers to the module itself');
+});
+
+QUnit.test("test resolving order and other logic", function (assert) {
+
+    define('a', ['c', 'b'], function (c, b) {
 
         console.log('processing a');
 
@@ -28,7 +135,12 @@
         };
     });
 
-    module.define('c', [], function () {
+    assert.ok(loom.modules.hasOwnProperty('a'), "module 'a' is in the container");
+    assert.ok(!loom.modules['a'].resolved, "module 'a' is not resolved, yet");
+    assert.ok(!loom.queue.hasOwnProperty('c') && !loom.queue.hasOwnProperty('b'), "modules 'c' and 'b' not in the queue, yet");
+
+
+    define('c', [], function () {
 
         console.log('processing c');
 
@@ -44,13 +156,15 @@
         };
     });
 
-    module.define('main', ['a'], function (a) {
+    assert.ok(loom.modules.hasOwnProperty('c'), "module 'c' is in the container");
+    assert.ok(!loom.modules['c'].resolved, "module 'c' is not resolved, yet");
+    assert.ok(!loom.queue.hasOwnProperty('c') && !loom.queue.hasOwnProperty('b'), "modules 'c' and 'b' not in the queue, yet");
+
+
+    require(['a'], function (a) {
 
         a.init();
 
-        module.require('e', function (e) {
-            e.init();
-        });
 
         a.logVal();
         a.c.add();
@@ -58,9 +172,15 @@
 
         console.log('initiated main');
 
-    }, true);
+    });
 
-    module.define('d', ['e'], function () {
+    assert.ok(loom.modules['c'].resolved, "module 'c' is resolved.");
+    assert.ok(!loom.modules['a'].resolved, "module 'a' is not resolved.");
+    assert.ok(loom.queue.hasOwnProperty('b') && loom.queue.hasOwnProperty('a'), "modules 'b' and 'a' are in the queue.");
+    assert.ok(!loom.queue.hasOwnProperty('c'), "modules 'c' is not in the queue.");
+
+
+    define('d', ['e'], function () {
 
         console.log('processing d');
 
@@ -73,7 +193,10 @@
         };
     });
 
-    module.define('b', ['c'], function (c) {
+    assert.ok(!loom.modules['d'].resolved, "module 'd' is not resolved.");
+    assert.ok(!loom.queue.hasOwnProperty('e'), "module 'e' is not in the queue.");
+
+    define('b', ['c'], function (c) {
 
         c.init();
         console.log('processing b');
@@ -86,47 +209,14 @@
         };
     });
 
-    module.define("jQuery", function () {
-        return 'insert jQuery here';
-    });
+    assert.ok(Object.keys(loom.queue).length === 0, "queue is empty");
+    assert.ok(loom.modules['a'].resolved, "module 'a' is resolved.");
+});
 
-    module.define("modernizr", function () {
-        return 'insert modernizr here';
-    });
+QUnit.test("calculator test", function (assert) {
+    expect(3);
 
-    module.define('e', function () {
-
-        console.log('processing e');
-
-        return {
-            init: function () {
-                console.log('initiated e');
-            }
-        };
-    });
-
-    module.require(['e'], function (e) {
-
-        module.require(['e', 'jQuery', 'load'], function (e, $, l) {
-            console.log('got e and $ and l');
-            console.log(l('yolo'));
-        });
-
-        module.require('e', function (e) {
-
-        });
-
-    });
-
-    module.define('load', function () {
-        return function (yolo) {
-
-            return yolo + ' swag';
-        };
-    });
-
-
-    module.define('Square', ['Multiply'], function (multi) {
+    define('Square', ['Multiply'], function (multi) {
 
         return function (num) {
             return multi(num, num);
@@ -134,35 +224,28 @@
     });
 
 
-    module.define('Main', ['Square', 'Multiply', 'Add', 'jQuery'], function (sq, mul, add, $) {
-        var a = 3;
+    require(['Square', 'Multiply', 'Add'], function (sq, mul, add) {
 
-        console.log(sq(a));
-        console.log(mul(a, 3));
-        console.log(add(a, 4));
-
-        // $('body').text('works!');
-    }, true);
+        assert.equal(sq(3), 9, 'square works');
+        assert.equal(mul(2, 3), 6, 'multiply works');
+        assert.equal(add(3, 4), 7, 'adding works');
+    });
 
 
-    module.define('Multiply', function () {
+    define('Multiply', function () {
 
         return function (num1, num2) {
             return num1 * num2;
         }
     });
 
-    module.define('jQuery', function () {
-
-        return jQuery.noConflict(); //assuming jQuery is loaded
-    });
-
-    module.define('Add', function () {
+    define('Add', function () {
 
         return function (num1, num2) {
             return num1 + num2;
         }
     });
+});
 </script>
 </body>
 </html>

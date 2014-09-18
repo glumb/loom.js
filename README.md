@@ -5,7 +5,7 @@ A super simple, lightweight ~0.5kB (minified & gzipped) and flexible module cont
 ##Why loom
 * structure code in modules
 * require modules in *any order*
-* libs like that follow the AMD syntax like jQuery automatically register as a module
+* libs that follow the AMD syntax, like jQuery, automatically register as a module
 * modules only get called, if they are requested
 
 ##What loom.js is not

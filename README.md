@@ -1,5 +1,10 @@
 loom.js 0.2.0
 =======
+
+[![GitHub license](https://img.shields.io/github/license/glumb/loom.js.svg)](https://github.com/glumb/loom.js/blob/master/LICENSE.md)
+[![Travis](https://img.shields.io/travis/glumb/loom.js.svg)](https://travis-ci.org/glumb/loom.js)
+[![Codecov](https://img.shields.io/codecov/c/github/glumb/loom.js.svg)](https://codecov.io/gh/glumb/loom.js)
+
 A super simple, lightweight ~0.5kB (minified & gzipped) and flexible module container.
 
 ## Why loom

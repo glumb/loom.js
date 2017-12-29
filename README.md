@@ -2,16 +2,16 @@ loom.js 0.2.0
 =======
 A super simple, lightweight ~0.5kB (minified & gzipped) and flexible module container.
 
-##Why loom
+## Why loom
 * structure code in modules
 * require modules in *any order*
 * libs like that follow the AMD syntax like jQuery automatically register as a module
 * modules only get called, if they are requested
 
-##What loom.js is not
+## What loom.js is not
 * a module loader, that loads modules via ajax.
 
-##How to use loom.js
+## How to use loom.js
 There are two base methods, `define()` and `require()`.
 Define your module using the `define()` method like so:
 
@@ -47,7 +47,7 @@ Request modules using `require()`:
 Modules can be required in *any order*, even before they are defined. Once the required module is
  defined, the callback of the `require` function will be called.
 
-##Example
+## Example
 The *require* works, even though *Add* and *Multiply* are defined afterwards.
 *Pi* is not logged to the console, because module *PI* is never requested.
 
@@ -89,5 +89,5 @@ The *require* works, even though *Add* and *Multiply* are defined afterwards.
     });
 
 
-##More examples
+## More examples
 Find examples [here](www.glumb.de/loomjs)
